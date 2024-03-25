@@ -8,12 +8,8 @@ import org.cyberslavs.parser.repo.TenderRepository;
 public class TenderDto {
     TenderRepository tenderRepository;
     CustomerRepository customerRepository;
-    Tender create(String name, String code, String address, String customerName){
-        Customer exist = customerRepository.findByName(customerName);
-        if(exist!=null){
-            exist = customerRepository.save(new Customer(customerName));
-        }
-        Tender tender = tenderRepository.save(new Tender(name, code, address, exist));
+    public Tender create(String name, String code, String address, String dateStart, String datePublish, String price){
+        Tender tender = tenderRepository.save(new Tender(name, code, address, dateStart, datePublish, price));
         return tender;
     }
 }

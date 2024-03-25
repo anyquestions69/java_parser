@@ -15,15 +15,17 @@ public class Tender {
     private String name;
     private String code;
     private String address;
-    @ManyToOne
-    @JoinColumn(name="customer_id", nullable = false)
-    private Customer customer;
+    private String dateStart;
+    private String datePublish;
+    private String price;
     protected Tender() {}
 
-    public Tender(String name, String code, String address, Customer customer) {
+    public Tender(String name, String code, String address, String dateStart, String datePublish, String price) {
         this.name = name;
         this.code = code;
         this.address=address;
-        this.customer = customer;
+        this.dateStart=dateStart;
+        this.datePublish=datePublish;
+        this.price=price;
     }
 }

@@ -10,8 +10,6 @@ public class Customer {
     @GeneratedValue(strategy = GenerationType.AUTO)
     long id;
     private String name;
-    @OneToMany(mappedBy = "customer")
-    private Set<Tender> tenders;
     protected Customer(){}
     public Customer(String name){
         this.name=name;

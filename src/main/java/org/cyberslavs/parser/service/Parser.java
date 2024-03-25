@@ -1,5 +1,8 @@
 package org.cyberslavs.parser.service;
 import io.github.bonigarcia.wdm.WebDriverManager;
+import org.cyberslavs.parser.dto.TenderDto;
+import org.cyberslavs.parser.entity.Tender;
+import org.cyberslavs.parser.repo.TenderRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,6 +15,8 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import java.io.FileWriter;
 import java.io.IOException;
 
@@ -20,29 +25,18 @@ import java.util.*;
 
 public class Parser {
     WebDriver driver;
+    @Autowired
+    TenderRepository tenderRepository;
     public Parser(){
         this.driver = new ChromeDriver();
     }
-    @BeforeAll
-    static void setupClass() {
-        WebDriverManager.chromedriver().setup();
-    }
-    @BeforeEach
-    void setupTest() {
-        this.driver = new ChromeDriver();
-    }
 
-    @AfterEach
-    void teardown() {
-        this.driver.quit();
-    }
-    @Test
-    public void parse() throws InterruptedException {
-        System.setProperty("webdriver.chrome.driver", "/Users/public_hysteria/Downloads/chromedriver_mac_arm64");
+    public List<Tender> parse() throws InterruptedException {
+        System.setProperty("webdriver.chrome.driver", "C:\\Program Files\\chromedriver-win64");
         WebDriverManager.chromedriver().setup();
         Scanner scanner = new Scanner(System.in);
-        this.driver.get("https://etp.tatneft.ru");
-
+        this.driver.get("https://etp.tatneft.ru/pls/tzp/f?p=220:562:10615457418812::NO:::");
+        List<Tender> tenders = new ArrayList<>();
         //System.out.print("Введите вид: [ Спрос / Предложение ]\n--> ");
         //String request_type = scanner.nextLine();
         //System.out.println();
@@ -100,14 +94,13 @@ public class Parser {
         for( WebElement elem: target_list.subList(1, target_list.size()) ) {
             List<WebElement> into_list = elem.findElements(By.tagName("td"));
             HashMap<String, Object> map = new HashMap<>();
-
+            String name;
             for(int i = 1; i < into_list.size(); i++) {
                 WebElement web_elem = into_list.get(i);
                 String key = head_name.get(i);
                 String val = extractTextFromElement( web_elem );
                 map.put(key, val);
             };
-
             try {
                 WebElement clicked_info = elem.findElement(By.cssSelector("td[headers='NAME_LINK']"));
                 if( !clicked_info.findElements( By.tagName("a") ).isEmpty() ) {
@@ -133,10 +126,14 @@ public class Parser {
                     };
                     map.put("Информация из вложенной таблицы", dop_hash_map_inf);
                     this.driver.navigate().back();
+                } else {
+                    map.put("Информация из вложенной таблицы", "");
                 };
             }  catch (Throwable e) {
                 e.printStackTrace();
             }
+            //System.out.println(head_name);
+            tenders.add(new Tender((String) map.get(head_name.get(2)), (String) map.get(head_name.get(1)), "", (String) map.get(head_name.get(8)), (String) map.get(head_name.get(7)), (String) map.get(head_name.get(5))));
             json_list.add(map);
         };
 
@@ -153,6 +150,7 @@ public class Parser {
 
         System.out.println(json);
         this.driver.quit();
+        return tenders;
     }
 
     private static String extractTextFromElement(WebElement element) {
