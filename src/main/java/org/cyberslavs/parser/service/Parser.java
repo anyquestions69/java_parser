@@ -43,12 +43,12 @@ public class Parser {
         //System.out.print("Введите вид: [ Спрос / Предложение ]\n--> ");
         //String request_type = scanner.nextLine();
         //System.out.println();
-        String request_type = "Спрос";
+        String request_type = "Предложение";
 
         //System.out.print("Введите тип торгов: [ Все / Аукцион / Запрос предложений / Редукцион / Тендер / Редукцион по голландскому методу ]\n--> ");
         //String bidding_type = scanner.nextLine();
         //System.out.println();
-        String bidding_type = "Все";
+        String bidding_type = "Тендер";
 
         //System.out.print("Введите cостояние : [ Текущие / Завершенные ]\n--> ");
         //String condition_type = scanner.nextLine();
@@ -100,7 +100,7 @@ public class Parser {
             String name;
             for(int i = 1; i < into_list.size(); i++) {
                 WebElement web_elem = into_list.get(i);
-                String key = head_name.get(i);
+                String key = head_name.get(i).replace("\n", " ");
                 String val = extractTextFromElement( web_elem );
                 map.put(key, val);
             };
@@ -135,7 +135,6 @@ public class Parser {
             }  catch (Throwable e) {
                 e.printStackTrace();
             }
-            //System.out.println(head_name);
             tenders.add(new Tender((String) map.get(head_name.get(2)), (String) map.get(head_name.get(1)), "", (String) map.get(head_name.get(8)), (String) map.get(head_name.get(7)), (String) map.get(head_name.get(5))));
             json_list.add(map);
         };
