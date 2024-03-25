@@ -1,12 +1,7 @@
 package org.cyberslavs.parser.service;
 import io.github.bonigarcia.wdm.WebDriverManager;
-import org.cyberslavs.parser.dto.TenderDto;
 import org.cyberslavs.parser.entity.Tender;
 import org.cyberslavs.parser.repo.TenderRepository;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -25,51 +20,32 @@ import java.time.Duration;
 import java.util.*;
 
 public class Parser {
+
     WebDriver driver;
+    ChromeOptions webOptions;
     @Autowired
     TenderRepository tenderRepository;
     public Parser(){
-        ChromeOptions options = new ChromeOptions();
-        options.addArguments("--headless");
-        this.driver = new ChromeDriver(options);
+        System.setProperty("webdriver.chrome.driver", "C:\\Program Files\\chromedriver-win64\\chromedriver-win64\\chromedriver.exe");
+        this.webOptions = new ChromeOptions();
+        this.webOptions.addArguments("--headless");
+        this.webOptions.addArguments("--ignore-certificate-errors");
+        this.driver = new ChromeDriver(this.webOptions);
     }
-
     public List<Tender> parse() throws InterruptedException {
-        System.setProperty("webdriver.chrome.driver", "C:\\Program Files\\chromedriver-win64");
         WebDriverManager.chromedriver().setup();
-        Scanner scanner = new Scanner(System.in);
-        this.driver.get("https://etp.tatneft.ru/pls/tzp/f?p=220:562:10615457418812::NO:::");
+
+        this.driver.get("https://etp.tatneft.ru/pls/tzp/f?p=220:562:11281430464650::::P562_OPEN_MODE,GLB_NAV_ROOT_ID,GLB_NAV_ID:,12920020,12920020");
         List<Tender> tenders = new ArrayList<>();
-        //System.out.print("Введите вид: [ Спрос / Предложение ]\n--> ");
-        //String request_type = scanner.nextLine();
-        //System.out.println();
-        String request_type = "Предложение";
+        List<String> option_list = Arrays.asList("Предложение", "Тендер", "Завершенные", "Материалы");
 
-        //System.out.print("Введите тип торгов: [ Все / Аукцион / Запрос предложений / Редукцион / Тендер / Редукцион по голландскому методу ]\n--> ");
-        //String bidding_type = scanner.nextLine();
-        //System.out.println();
-        String bidding_type = "Тендер";
-
-        //System.out.print("Введите cостояние : [ Текущие / Завершенные ]\n--> ");
-        //String condition_type = scanner.nextLine();
-        //System.out.println();
-        String condition_type = "Завершенные";
-
-        //System.out.print("Введите класс заказа: [ Все / Оборудование / Материалы / Услуги ]\n--> ");
-        //String order_class = scanner.nextLine();
-        //System.out.println();
-        String order_class = "Материалы";
-
-        List<String> option_list = Arrays.asList(request_type, bidding_type, condition_type, order_class);
-        WebDriverWait wait = new WebDriverWait(this.driver, Duration.ofSeconds(10));
+        WebDriverWait wait = new WebDriverWait(this.driver, Duration.ofSeconds(5));
+        wait.pollingEvery(Duration.ofMillis(250));
         for(int i = 0; i < 3; i++) {
-            // Переопределение элементов перед каждым взаимодействием
             List<WebElement> selectors_panel = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.cssSelector("select.selectlist"))).subList(0, 3);
-            WebElement pre_val = selectors_panel.get(i);
-            pre_val.click();
+            selectors_panel.get(i).click();
             try {
-                WebDriverWait waitForOption = new WebDriverWait(this.driver, Duration.ofSeconds(1));
-                List<WebElement> options = waitForOption.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.tagName("option")));
+                List<WebElement> options = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.tagName("option")));
                 for(WebElement elem: options) {
                     if(elem.getText().equals(option_list.get(i))) {
                         elem.click();
@@ -80,10 +56,6 @@ public class Parser {
                 System.out.println("Ошибка при взаимодействии с элементом: " + e.getMessage());
             }
         };
-
-        //WebDriverWait waitForButton = new WebDriverWait(driver, 10);
-        //WebElement btn_list = waitForButton.until(ExpectedConditions.elementToBeClickable(By.cssSelector("img[src='/i/list_gray.gif']")));
-        //btn_list.click();
 
         WebElement table = this.driver.findElement(By.cssSelector("table.a-IRR-table")).findElement(By.tagName("tbody"));
         List<WebElement> target_list = table.findElements(By.tagName("tr"));
@@ -97,20 +69,23 @@ public class Parser {
         for( WebElement elem: target_list.subList(1, target_list.size()) ) {
             List<WebElement> into_list = elem.findElements(By.tagName("td"));
             HashMap<String, Object> map = new HashMap<>();
-            String name;
+
             for(int i = 1; i < into_list.size(); i++) {
                 WebElement web_elem = into_list.get(i);
                 String key = head_name.get(i).replace("\n", " ");
-                String val = extractTextFromElement( web_elem );
+                String val = extractTextFromElement(web_elem);
                 map.put(key, val);
             };
+
             try {
                 WebElement clicked_info = elem.findElement(By.cssSelector("td[headers='NAME_LINK']"));
                 if( !clicked_info.findElements( By.tagName("a") ).isEmpty() ) {
                     HashMap<String, HashMap> dop_hash_map_inf = new HashMap<>();
-                    clicked_info.click();
-                    WebDriverWait clicked_wait = new WebDriverWait(this.driver, Duration.ofSeconds(1));
-                    WebElement dop_info_table = clicked_wait.until(ExpectedConditions.presenceOfElementLocated(By.className("ReportTbl")));
+
+                    WebDriver into_driver = new ChromeDriver(this.webOptions);
+                    into_driver.get(clicked_info.findElement( By.tagName("a") ).getAttribute("href"));
+                    WebElement dop_info_table = into_driver.findElement(By.className("ReportTbl"));
+
                     List<WebElement> data_blocks = dop_info_table.findElements(By.tagName("tbody"));
 
                     List<String> pre_table_heads = new ArrayList<>();
@@ -123,21 +98,22 @@ public class Parser {
                         List<WebElement> tds = tr.findElements(By.tagName("td"));
                         HashMap<String, String> tr_hash_map = new HashMap<>();
                         for(int j = 1; j < tds.size(); j++) {
-                            tr_hash_map.put(pre_table_heads.get(j), tds.get(j).getText());
+                            tr_hash_map.put(pre_table_heads.get(j).replace("\n", " "), tds.get(j).getText());
                         };
                         dop_hash_map_inf.put(tds.get(0).getText(), tr_hash_map);
                     };
                     map.put("Информация из вложенной таблицы", dop_hash_map_inf);
-                    this.driver.navigate().back();
+                    into_driver.quit();
                 } else {
-                    map.put("Информация из вложенной таблицы", "");
+                    map.put("Информация из вложенной таблицы", null);
                 };
-            }  catch (Throwable e) {
+            } catch (Throwable e) {
                 e.printStackTrace();
             }
             tenders.add(new Tender((String) map.get(head_name.get(2)), (String) map.get(head_name.get(1)), "", (String) map.get(head_name.get(8)), (String) map.get(head_name.get(7)), (String) map.get(head_name.get(5))));
             json_list.add(map);
         };
+        this.driver.quit();
 
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         String json = gson.toJson(json_list);
@@ -150,10 +126,9 @@ public class Parser {
             e.printStackTrace();
         }
 
-        System.out.println(json);
-        this.driver.quit();
+        //System.out.println(json);
         return tenders;
-    }
+    };
 
     private static String extractTextFromElement(WebElement element) {
         List<WebElement> children = element.findElements(By.xpath("./*"));
