@@ -9,8 +9,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import com.google.gson.Gson;
@@ -28,7 +29,9 @@ public class Parser {
     @Autowired
     TenderRepository tenderRepository;
     public Parser(){
-        this.driver = new ChromeDriver();
+        ChromeOptions options = new ChromeOptions();
+        options.addArguments("--headless");
+        this.driver = new ChromeDriver(options);
     }
 
     public List<Tender> parse() throws InterruptedException {
@@ -50,7 +53,7 @@ public class Parser {
         //System.out.print("Введите cостояние : [ Текущие / Завершенные ]\n--> ");
         //String condition_type = scanner.nextLine();
         //System.out.println();
-        String condition_type = "Текущие";
+        String condition_type = "Завершенные";
 
         //System.out.print("Введите класс заказа: [ Все / Оборудование / Материалы / Услуги ]\n--> ");
         //String order_class = scanner.nextLine();
