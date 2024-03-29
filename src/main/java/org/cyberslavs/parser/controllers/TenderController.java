@@ -4,10 +4,13 @@ import org.apache.coyote.Response;
 import org.cyberslavs.parser.entity.Tender;
 import org.cyberslavs.parser.repo.TenderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 @RestController
@@ -15,18 +18,33 @@ import java.util.Optional;
 public class TenderController {
     @Autowired
     TenderRepository tenderRepository;
+    @GetMapping()
+    public List<Tender> findByName(@RequestParam(name="name", required = false) String name){
+
+
+        String[] keywords={"метал", "сталь",
+                "нефтегаз", "арматур",
+                "прокат", "уголок",
+                "проволо", "крепеж",
+                "гвозд", "профил",
+                "чугун", "шлак",
+                "желез","руд",
+                "труб"
+        };
+        if(name==null){
+            List<Tender>first=tenderRepository.findAll();
+            return first;
+        }
+        System.out.println(name);
+        name=name.toLowerCase(Locale.ROOT);
+        return tenderRepository.findByNameLike("%"+name+"%");
+    }
     @GetMapping("/{id}")
     public Tender findOne(@RequestParam long id){
         Tender tender = tenderRepository.findById(id);
         return tender;
     }
-    @GetMapping()
-    public List<Tender> findByName(@PathVariable(name="name", required = false) String name){
-        if(name==null){
-            return tenderRepository.findAll();
-        }
-        return tenderRepository.findAllByName(name);
-    }
+
     @DeleteMapping("/{id}")
     public String deleteOne(@RequestParam long id){
         Tender tender = tenderRepository.findById(id);

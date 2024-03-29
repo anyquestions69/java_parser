@@ -1,9 +1,12 @@
 package org.cyberslavs.parser.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.DynamicInsert;
 
+import java.util.List;
 import java.util.Set;
 
+@DynamicInsert
 @Entity
 @Table(name = "tenders")
 public class Tender {
@@ -14,19 +17,28 @@ public class Tender {
 
     private String name;
      private String code;
+     @Column(name="datestart")
      private String dateStart;
+    @Column(name="datepublish")
      private String datePublish;
+    @Column(name="dateend")
      private String dateEnd;
      private String price;
-    protected Tender() {}
+     private String href;
 
-    public Tender(String name, String code, String dateEnd, String dateStart, String datePublish, String price) {
+     @OneToMany(mappedBy = "tender", cascade = CascadeType.ALL, orphanRemoval = true)
+     private List<Additional> additional;
+    protected Tender() {
+    }
+
+    public Tender(String name, String code, String dateEnd, String dateStart, String datePublish, String price, String href) {
         this.name = name;
         this.code = code;
         this.dateStart=dateStart;
         this.datePublish=datePublish;
         this.price=price;
         this.dateEnd=dateEnd;
+        this.href = href;
     }
 
     public String getName() {
@@ -77,5 +89,25 @@ public class Tender {
 
     public void setDateEnd(String dateEnd) {
         this.dateEnd = dateEnd;
+    }
+
+    public String getHref() {
+        return href;
+    }
+
+    public List<Additional> getAdditional() {
+        return additional;
+    }
+
+    public void setAdditional(List<Additional> additional) {
+        this.additional = additional;
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
     }
 }

@@ -1,5 +1,6 @@
 package org.cyberslavs.parser.service;
 import io.github.bonigarcia.wdm.WebDriverManager;
+import org.cyberslavs.parser.entity.Additional;
 import org.cyberslavs.parser.entity.Tender;
 import org.cyberslavs.parser.repo.TenderRepository;
 import org.hibernate.Session;
@@ -30,7 +31,7 @@ public class Parser {
     private static SessionFactory factory;
     public static void main(String[] args){
     try {
-        factory = new Configuration().addAnnotatedClass(Tender.class).configure().buildSessionFactory();
+        factory = new Configuration().addAnnotatedClass(Tender.class).addAnnotatedClass(Additional.class).configure().buildSessionFactory();
         Session session = factory.openSession();
         Transaction tx = null;
         Integer employeeID = null;
@@ -88,7 +89,8 @@ public class Parser {
                 map.put(key, val);
             }
             ;
-
+            String href;
+            List<Additional> add=new ArrayList<Additional>();
             try {
                 WebElement clicked_info = elem.findElement(By.cssSelector("td[headers='NAME_LINK']"));
                 if (!clicked_info.findElements(By.tagName("a")).isEmpty()) {
@@ -96,6 +98,7 @@ public class Parser {
 
                     WebDriver into_driver = new ChromeDriver(webOptions);
                     into_driver.get(clicked_info.findElement(By.tagName("a")).getAttribute("href"));
+                    href=clicked_info.findElement(By.tagName("a")).getAttribute("href");
                     WebElement dop_info_table = into_driver.findElement(By.className("ReportTbl"));
 
                     List<WebElement> data_blocks = dop_info_table.findElements(By.tagName("tbody"));
@@ -113,6 +116,14 @@ public class Parser {
                         for (int j = 1; j < tds.size(); j++) {
                             tr_hash_map.put(pre_table_heads.get(j).replace("\n", " "), tds.get(j).getText());
                         }
+                        if((String)tr_hash_map.get(tds.get(2).getText())==null){
+                            add.add(new Additional(tr_hash_map.get("Наименование"), 0));
+
+                        }else{
+                            add.add(new Additional(tr_hash_map.get("Наименование"), Integer.valueOf(tr_hash_map.get("Кол-во"))));
+
+                        }
+
                         ;
                         dop_hash_map_inf.put(tds.get(0).getText(), tr_hash_map);
                     }
@@ -121,18 +132,23 @@ public class Parser {
                     into_driver.quit();
                 } else {
                     map.put("Информация из вложенной таблицы", null);
+                    href="";
                 }
                 ;
-            } catch (Throwable e) {
-                e.printStackTrace();
-            }
-            tenders.add(new Tender((String) map.get(head_name.get(2)),
+            Tender tender= new Tender((String) map.get(head_name.get(2)),
                     (String) map.get(head_name.get(1)),
                     (String) map.get(head_name.get(9)),
                     (String) map.get(head_name.get(8)),
                     (String) map.get(head_name.get(7)),
-                    (String) map.get(head_name.get(5))));
+                    (String) map.get(head_name.get(5)),
+                    href
+            );
+            tenders.add(tender);
+            tender.setAdditional(add);
             json_list.add(map);
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
         }
         ;
         driver.quit();
@@ -152,6 +168,10 @@ public class Parser {
         tx = session.beginTransaction();
         for(Tender tender:tenders){
             session.save(tender);
+            for(Additional add: tender.getAdditional()){
+                add.setTender(tender);
+                session.save(add);
+            }
             System.out.println(tender);
         }
 
