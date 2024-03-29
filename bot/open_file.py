@@ -1,10 +1,12 @@
 import json
 from jinja2 import Template
+import requests
 
 
-def make_textmessage(file_name):
-    with open(file=file_name, encoding='utf-8') as json_file:
-        data = json.load(json_file)
+def make_textmessage():
+    r = requests.get("http://localhost:8080/tender")
+    st = r.text
+    data = json.loads(st)
     string = ''' 
     {% for d in data -%}
         Название: {{d['name']}} - цена: {{d['price']}}
