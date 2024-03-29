@@ -37,12 +37,10 @@ public class TenderController {
                 List<Tender> td = tenderRepository.findByNameLike("%"+keywords[i]+"%");
                 for(Tender tender:td){
                     first.add(tender);
-                    System.out.println(tender.getAdditional());
                 }
             }
             return first;
         }
-        System.out.println(name);
         name=name.toLowerCase(Locale.ROOT);
         return tenderRepository.findByNameLike("%"+name+"%");
     }

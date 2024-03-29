@@ -2,7 +2,6 @@ package org.cyberslavs.parser.service;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.cyberslavs.parser.entity.Additional;
 import org.cyberslavs.parser.entity.Tender;
-import org.cyberslavs.parser.repo.TenderRepository;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
@@ -16,20 +15,25 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.springframework.beans.factory.annotation.Autowired;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+
 import java.io.FileWriter;
 import java.io.IOException;
 
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public class Parser {
     private static SessionFactory factory;
     public static void main(String[] args){
+        Calendar today = Calendar.getInstance();
+        today.set(Calendar.HOUR_OF_DAY, 2);
+        today.set(Calendar.MINUTE, 0);
+        today.set(Calendar.SECOND, 0);
+        Timer timer = new Timer();
+        timer.schedule(parse(), today.getTime(), TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS));
+    }
+    public static TimerTask parse(){
     try {
         factory = new Configuration().addAnnotatedClass(Tender.class).addAnnotatedClass(Additional.class).configure().buildSessionFactory();
         Session session = factory.openSession();
@@ -180,6 +184,7 @@ public class Parser {
     }catch (Exception e){
         e.printStackTrace();
     }
+        return null;
     }
     private static String extractTextFromElement(WebElement element) {
         List<WebElement> children = element.findElements(By.xpath("./*"));
