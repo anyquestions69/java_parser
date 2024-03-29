@@ -40,7 +40,6 @@ public class Parser {
                 factory = new Configuration().addAnnotatedClass(Tender.class).addAnnotatedClass(Additional.class).configure().buildSessionFactory();
                 Session session = factory.openSession();
                 Transaction tx = null;
-                Integer employeeID = null;
 
                 WebDriver driver;
                 ChromeOptions webOptions;
@@ -186,9 +185,11 @@ public class Parser {
             }catch (Exception e){
                 e.printStackTrace();
             }
-                    System.out.println("Task performed on: " + new Date() + "n" +
-                            "Thread's name: " + Thread.currentThread().getName());
-            }
+            System.out.println("Task performed on: " + new Date() + "n" +
+                "Thread's name: " + Thread.currentThread().getName());
+            SecondParser();
+        }
+
 
     };
 
@@ -204,5 +205,90 @@ public class Parser {
             }
             return text.toString();
         }
+    }
+
+    public static void SecondParser(){
+        Session session = factory.openSession();
+        Transaction tx = null;
+        String url = "https://etp.metal-it.ru/trades?documents=N4IgLgTghgJgpgZTlCBjAFgbQA4Fc3pQDOcRAdCShgLogBcoEpuANmALID289oAblBa449cFABGLEQF8ANCE4R4EXiACWMegHZ5YNWCmjAhCCB%2BEEB8IIEEQM4EYQAASB2EEAMIIC4QQMIgJ54A4QEPIC2UMABJVE4AO1EUCE4AdwB9XGxolE15bAg1fwgATwBRAA800iI1MNViVDhQmDVQgHN6SGFUqOw4CDAs0QAFACUAeQBhAFUenPYcgDkAFVjxqYAJPoAREDkQOAKmImKwonpMUHLK6rqGiCaQNM5W9s66EF7BkbHJmbnFlelqaR%2BgA";
+        WebDriver driver;
+        ChromeOptions webOptions;
+        WebDriverManager.chromedriver().setup();
+
+        System.setProperty("webdriver.chrome.driver", "/Users/public_hysteria/Downloads/chromedriver-mac-arm64/chromedriver");
+        webOptions = new ChromeOptions();
+        webOptions.addArguments("--headless");
+        webOptions.addArguments("--ignore-certificate-errors");
+        driver = new ChromeDriver(webOptions);
+        driver.get(url);
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofMillis(500));
+        wait.pollingEvery(Duration.ofMillis(200));
+
+        WebElement table = wait.until(ExpectedConditions.visibilityOfElementLocated(By.tagName("table")));
+
+        List<WebElement> th_header = table.findElement(By.tagName("thead")).findElements(By.tagName("th"));
+        List<Object> cols_name_header = new ArrayList<>();
+        for(WebElement elem: th_header) {
+            cols_name_header.add(elem.getText());
+        };
+
+        List<WebElement> list_page_btn = driver.findElements(By.cssSelector("um-paginator div.ng-star-inserted > div.ng-star-inserted"));
+
+        List<HashMap> data_list = new ArrayList<>();
+        for(int i = 0; i < list_page_btn.size(); i++) {
+            driver.findElements(By.cssSelector("um-paginator div.ng-star-inserted > div.ng-star-inserted")).get(i).click();
+
+            WebElement t_body = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("table > tbody")));
+            List<WebElement> list_page_tr = t_body.findElements(By.tagName("tr"));
+            for(WebElement tr: list_page_tr) {
+
+                List<WebElement> tds = tr.findElements(By.tagName("td"));
+                HashMap<String, Object> inner_data_tr = new HashMap<>();
+                for(int j = 1; j < tds.size(); j++) {
+                    if(j == 1) {
+                        inner_data_tr.put( "НОМЕР", tds.get(j).findElement(By.tagName("div")).getText() );
+                        inner_data_tr.put( "НАИМЕНОВАНИЕ", tds.get(j).findElement(By.tagName("span")).getText() );
+                    } else {
+                        inner_data_tr.put( (String) cols_name_header.get(j), tds.get(j).getText() );
+                    }
+                }
+
+                WebDriver new_driver = new ChromeDriver(webOptions);
+                new_driver.get( tr.findElement(By.tagName("a")).getAttribute("href") );
+
+                WebDriverWait new_wait = new WebDriverWait(new_driver, Duration.ofMillis(500));
+                new_wait.pollingEvery(Duration.ofMillis(200));
+                WebElement intro_table = new_wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".k-grid-aria-root")));
+
+                List<String> th_name_intro_table = Arrays.asList("№", "Наименование, технические характеристики", "Характеристики", "Количество", "Ед. изм.", "Заказчик", "Потребитель", "Грузополучатель", "Срок поставки", "Комментарий организатора");
+                List<WebElement> intro = intro_table.findElement(By.cssSelector("table.k-grid-table")).findElement(By.tagName("tbody")).findElements(By.tagName("tr"));
+                HashMap<String, HashMap> target_intro_hashmap = new HashMap();
+                for(int t = 0; t < intro.size(); t++) {
+                    List<WebElement> intro_td = intro.get(t).findElements(By.tagName("td"));
+                    HashMap<String, String> target_intro = new HashMap();
+                    for(int k = 1; k < th_name_intro_table.size(); k++) {
+                        target_intro.put( th_name_intro_table.get(k), intro_td.get(k).getText() );
+                    }
+                    target_intro_hashmap.put("Page_" + t , target_intro);
+                }
+                new_driver.quit();
+                System.out.println(target_intro_hashmap);
+                inner_data_tr.put("Внутренняя информация:", target_intro_hashmap);
+                data_list.add( inner_data_tr );
+            }
+        }
+
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        String json = gson.toJson(data_list);
+
+        try (FileWriter file = new FileWriter("./data_metal_it.json")) {
+            file.write(json);
+            System.out.println("Successfully Copied JSON Object to File...");
+            System.out.println("\nJSON Object: " + json);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        driver.quit();
     }
 }
