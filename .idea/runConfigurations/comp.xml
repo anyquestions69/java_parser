@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="comp" type="CompoundRunConfigurationType">
+    <toRun name="Parser" type="Application" />
+    <toRun name="ParserApplication" type="Application" />
+    <method v="2" />
+  </configuration>
+</component>

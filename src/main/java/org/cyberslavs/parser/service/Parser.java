@@ -2,6 +2,10 @@ package org.cyberslavs.parser.service;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.cyberslavs.parser.entity.Tender;
 import org.cyberslavs.parser.repo.TenderRepository;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
+import org.hibernate.cfg.Configuration;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -23,16 +27,13 @@ import java.time.Duration;
 import java.util.*;
 
 public class Parser {
+    private static SessionFactory factory;
     public static void main(String[] args){
     try {
-        Connection conn = DriverManager.getConnection(
-                "jdbc:postgresql://127.0.0.1:5432/postgres", "public_hysteria", "0666");
-        conn.setAutoCommit(false);
-        if (conn != null) {
-            System.out.println("Connected to the database!");
-        } else {
-            System.out.println("Failed to make connection!");
-        }
+        factory = new Configuration().addAnnotatedClass(Tender.class).configure().buildSessionFactory();
+        Session session = factory.openSession();
+        Transaction tx = null;
+        Integer employeeID = null;
 
         WebDriver driver;
         ChromeOptions webOptions;
@@ -47,7 +48,7 @@ public class Parser {
         List<Tender> tenders = new ArrayList<>();
         List<String> option_list = Arrays.asList("Предложение", "Тендер", "Завершенные", "Материалы");
 
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofMillis(500));
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofMillis(300));
         wait.pollingEvery(Duration.ofMillis(250));
         for (int i = 0; i < 3; i++) {
             List<WebElement> selectors_panel = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.cssSelector("select.selectlist"))).subList(0, 3);
@@ -147,28 +148,14 @@ public class Parser {
             e.printStackTrace();
         }
 
-        System.out.println(json);
-        PreparedStatement ps = null;
-            String sql = "INSERT INTO tenders (code,  name) VALUES (?,?)";
-            ps = conn.prepareStatement(sql);
+        //System.out.println(json);
+        tx = session.beginTransaction();
+        for(Tender tender:tenders){
+            session.save(tender);
+            System.out.println(tender);
+        }
 
-            int insertCount = 0;
-            for (Tender tender : tenders) {
-                ps.setString(1, (String)tender.getCode());
-                //ps.setString(2, (String) tender.getDatePublish());
-                //ps.setString(3, (String)tender.getDateStart());
-                ps.setString(2, (String)tender.getName());
-                //ps.setString(5, (String)tender.getPrice());
-                //ps.setString(6, (String)tender.getDateEnd());
-                ps.addBatch();
-                if (++insertCount % 1000 == 0) {
-                    ps.executeBatch();
-                }
-            }
-            ps.executeBatch();
-
-                ps.close();
-                conn.close();
+        tx.commit();
 
     }catch (Exception e){
         e.printStackTrace();

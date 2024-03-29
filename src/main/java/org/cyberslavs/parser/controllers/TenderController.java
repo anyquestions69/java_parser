@@ -15,18 +15,14 @@ import java.util.Optional;
 public class TenderController {
     @Autowired
     TenderRepository tenderRepository;
-    @GetMapping
-    public List<Tender> findAll(){
-        return tenderRepository.findAll();
-    }
     @GetMapping("/{id}")
     public Tender findOne(@RequestParam long id){
         Tender tender = tenderRepository.findById(id);
         return tender;
     }
-    @GetMapping("/name")
-    public List<Tender> findByName(@PathVariable(name="name") String name){
-        if(name.isBlank()){
+    @GetMapping()
+    public List<Tender> findByName(@PathVariable(name="name", required = false) String name){
+        if(name==null){
             return tenderRepository.findAll();
         }
         return tenderRepository.findAllByName(name);
