@@ -12,7 +12,10 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
-
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.io.FileWriter;
 import java.io.IOException;
 
@@ -21,25 +24,32 @@ import java.util.*;
 
 public class Parser {
 
-    WebDriver driver;
-    ChromeOptions webOptions;
-    @Autowired
-    TenderRepository tenderRepository;
-    public Parser(){
-        System.setProperty("webdriver.chrome.driver", "C:\\Program Files\\chromedriver-win64\\chromedriver-win64\\chromedriver.exe");
-        this.webOptions = new ChromeOptions();
-        this.webOptions.addArguments("--headless");
-        this.webOptions.addArguments("--ignore-certificate-errors");
-        this.driver = new ChromeDriver(this.webOptions);
-    }
-    public List<Tender> parse() throws InterruptedException {
+
+
+    public static void main() throws InterruptedException, SQLException {
+       Connection conn = DriverManager.getConnection(
+                "jdbc:postgresql://127.0.0.1:5432/postgres", "public_hysteria", "0666");
+        conn.setAutoCommit(false);
+        if (conn != null) {
+            System.out.println("Connected to the database!");
+        } else {
+            System.out.println("Failed to make connection!");
+        }
+
+        WebDriver driver;
+        ChromeOptions webOptions;
         WebDriverManager.chromedriver().setup();
 
-        this.driver.get("https://etp.tatneft.ru/pls/tzp/f?p=220:562:11281430464650::::P562_OPEN_MODE,GLB_NAV_ROOT_ID,GLB_NAV_ID:,12920020,12920020");
+        System.setProperty("webdriver.chrome.driver", "C:\\Program Files\\chromedriver-win64\\chromedriver-win64\\chromedriver.exe");
+        webOptions = new ChromeOptions();
+        webOptions.addArguments("--headless");
+        webOptions.addArguments("--ignore-certificate-errors");
+        driver = new ChromeDriver(webOptions);
+        driver.get("https://etp.tatneft.ru/pls/tzp/f?p=220:562:11281430464650::::P562_OPEN_MODE,GLB_NAV_ROOT_ID,GLB_NAV_ID:,12920020,12920020");
         List<Tender> tenders = new ArrayList<>();
         List<String> option_list = Arrays.asList("Предложение", "Тендер", "Завершенные", "Материалы");
 
-        WebDriverWait wait = new WebDriverWait(this.driver, Duration.ofSeconds(5));
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofMillis(500));
         wait.pollingEvery(Duration.ofMillis(250));
         for(int i = 0; i < 3; i++) {
             List<WebElement> selectors_panel = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.cssSelector("select.selectlist"))).subList(0, 3);
@@ -57,7 +67,7 @@ public class Parser {
             }
         };
 
-        WebElement table = this.driver.findElement(By.cssSelector("table.a-IRR-table")).findElement(By.tagName("tbody"));
+        WebElement table = driver.findElement(By.cssSelector("table.a-IRR-table")).findElement(By.tagName("tbody"));
         List<WebElement> target_list = table.findElements(By.tagName("tr"));
         List<HashMap> json_list = new ArrayList<>();
         List<String> head_name = new ArrayList<>();
@@ -82,7 +92,7 @@ public class Parser {
                 if( !clicked_info.findElements( By.tagName("a") ).isEmpty() ) {
                     HashMap<String, HashMap> dop_hash_map_inf = new HashMap<>();
 
-                    WebDriver into_driver = new ChromeDriver(this.webOptions);
+                    WebDriver into_driver = new ChromeDriver(webOptions);
                     into_driver.get(clicked_info.findElement( By.tagName("a") ).getAttribute("href"));
                     WebElement dop_info_table = into_driver.findElement(By.className("ReportTbl"));
 
@@ -113,7 +123,7 @@ public class Parser {
             tenders.add(new Tender((String) map.get(head_name.get(2)), (String) map.get(head_name.get(1)), "", (String) map.get(head_name.get(8)), (String) map.get(head_name.get(7)), (String) map.get(head_name.get(5))));
             json_list.add(map);
         };
-        this.driver.quit();
+        driver.quit();
 
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         String json = gson.toJson(json_list);
@@ -126,10 +136,37 @@ public class Parser {
             e.printStackTrace();
         }
 
-        //System.out.println(json);
-        return tenders;
-    };
+        System.out.println(json);
+        PreparedStatement ps = null;
+        try {
+            String sql = "INSERT INTO theTable (aColumn) VALUES (?)";
+            ps = conn.prepareStatement(sql);
 
+            int insertCount=0;
+            for (Tender tender : tenders) {
+                ps.setString(1, tender.getClass().getName());
+                ps.setString(1, tender.getCode());
+                ps.addBatch();
+                if (++insertCount % 1000 == 0) {
+                    ps.executeBatch();
+                }
+            }
+            ps.executeBatch();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+        finally {
+            try {
+                ps.close();
+                conn.close();
+            } catch (SQLException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+    }
     private static String extractTextFromElement(WebElement element) {
         List<WebElement> children = element.findElements(By.xpath("./*"));
 
