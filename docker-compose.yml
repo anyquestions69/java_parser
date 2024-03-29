@@ -9,8 +9,12 @@ services:
         condition: service_healthy
     environment:
       - POSTGRES_URL=jdbc:postgresql://db:5432/${DB_NAME}
+    env_file:
+      - .env
   bot:
     build: ./bot
+    env_file:
+      - .env
   db:
     image: postgres
     restart: always
