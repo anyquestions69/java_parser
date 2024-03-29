@@ -24,6 +24,13 @@ public class TenderController {
         Tender tender = tenderRepository.findById(id);
         return tender;
     }
+    @GetMapping("/name")
+    public List<Tender> findByName(@PathVariable(name="name") String name){
+        if(name.isBlank()){
+            return tenderRepository.findAll();
+        }
+        return tenderRepository.findAllByName(name);
+    }
     @DeleteMapping("/{id}")
     public String deleteOne(@RequestParam long id){
         Tender tender = tenderRepository.findById(id);

@@ -9,5 +9,6 @@ public interface TenderRepository extends JpaRepository<Tender, Long> {
 
     Tender findByName(String name);
     Tender findById(long id);
+    List<Tender> findAllByName(String name);
 
 }

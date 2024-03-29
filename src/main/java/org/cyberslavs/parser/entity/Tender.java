@@ -14,19 +14,19 @@ public class Tender {
 
     private String name;
      private String code;
-     private String address;
      private String dateStart;
      private String datePublish;
+     private String dateEnd;
      private String price;
     protected Tender() {}
 
-    public Tender(String name, String code, String address, String dateStart, String datePublish, String price) {
+    public Tender(String name, String code, String dateEnd, String dateStart, String datePublish, String price) {
         this.name = name;
         this.code = code;
-        this.address=address;
         this.dateStart=dateStart;
         this.datePublish=datePublish;
         this.price=price;
+        this.dateEnd=dateEnd;
     }
 
     public String getName() {
@@ -45,13 +45,7 @@ public class Tender {
         this.code = code;
     }
 
-    public String getAddress() {
-        return address;
-    }
 
-    public void setAddress(String address) {
-        this.address = address;
-    }
 
     public String getDateStart() {
         return dateStart;
@@ -75,5 +69,13 @@ public class Tender {
 
     public void setPrice(String price) {
         this.price = price;
+    }
+
+    public String getDateEnd() {
+        return dateEnd;
+    }
+
+    public void setDateEnd(String dateEnd) {
+        this.dateEnd = dateEnd;
     }
 }
