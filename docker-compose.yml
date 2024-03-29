@@ -1,7 +1,7 @@
 services:
   server:
     build:
-      context: .
+      context: ./api
     ports:
       - 8080:8080
     depends_on:
@@ -9,6 +9,8 @@ services:
         condition: service_healthy
     environment:
       - POSTGRES_URL=jdbc:postgresql://db:5432/${DB_NAME}
+  bot:
+    build: ./bot
   db:
     image: postgres
     restart: always
@@ -24,5 +26,16 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  pgadmin:
+    container_name: pgadmin
+    depends_on:
+      - db
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@mail.ru
+      PGADMIN_DEFAULT_PASSWORD: aaa000
+    expose:
+      - '80'
+    restart: always
 volumes:
   db-data:
