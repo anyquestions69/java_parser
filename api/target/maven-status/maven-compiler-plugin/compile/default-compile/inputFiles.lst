@@ -1,0 +1,9 @@
+/Users/public_hysteria/java_parser/api/src/main/java/org/cyberslavs/parser/repo/CustomerRepository.java
+/Users/public_hysteria/java_parser/api/src/main/java/parserservice/Parser.java
+/Users/public_hysteria/java_parser/api/src/main/java/org/cyberslavs/parser/entity/Customer.java
+/Users/public_hysteria/java_parser/api/src/main/java/org/cyberslavs/parser/config/WebConfig.java
+/Users/public_hysteria/java_parser/api/src/main/java/org/cyberslavs/parser/entity/Tender.java
+/Users/public_hysteria/java_parser/api/src/main/java/org/cyberslavs/parser/ParserApplication.java
+/Users/public_hysteria/java_parser/api/src/main/java/org/cyberslavs/parser/repo/TenderRepository.java
+/Users/public_hysteria/java_parser/api/src/main/java/org/cyberslavs/parser/controllers/TenderController.java
+/Users/public_hysteria/java_parser/api/src/main/java/org/cyberslavs/parser/entity/Additional.java

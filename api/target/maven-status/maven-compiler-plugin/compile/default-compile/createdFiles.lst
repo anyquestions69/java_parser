@@ -1,0 +1,10 @@
+org/cyberslavs/parser/entity/Additional.class
+org/cyberslavs/parser/repo/CustomerRepository.class
+org/cyberslavs/parser/entity/Tender.class
+parserservice/Parser.class
+org/cyberslavs/parser/entity/Customer.class
+parserservice/Parser$1.class
+org/cyberslavs/parser/ParserApplication.class
+org/cyberslavs/parser/controllers/TenderController.class
+org/cyberslavs/parser/config/WebConfig.class
+org/cyberslavs/parser/repo/TenderRepository.class
