@@ -5,8 +5,9 @@ import os
 
 
 def make_textmessage():
-    r = requests.get(os.environ["API_URL"])
+    r = requests.get('http://localhost:8080/tender')
     st = r.text
+    print(st)
     data = json.loads(st)
     string = ''' 
     {% for d in data -%}

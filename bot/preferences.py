@@ -6,8 +6,8 @@ from langchain.chat_models.gigachat import GigaChat
 from giga import chat_with
 import os
 
-auth = os.environ['AUTH']
-token = os.environ['TOKEN']
+auth = 'YjJmZGEwNWQtMWYxNS00NWYxLWI0OTItMDQxMDgwZDRlZGRmOjM3MmRmYWJhLTcwNDktNDEyOS05OTQ4LWIyNDY5ZTk1YWEwZg=='
+token = '7185794545:AAEPgHUUcB2kkKAwadwPaF3udx-HXGgy1qE'
 bot = telebot.TeleBot(token)
 
 ai_chat = [SystemMessage(content='''Ты создан для целей продаж и маркетингового анализа рынка ведется анализ тендеров
